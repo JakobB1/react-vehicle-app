@@ -13,18 +13,9 @@ import TableSortLabel from '@mui/material/TableSortLabel';
 import Toolbar from '@mui/material/Toolbar';
 import Typography from '@mui/material/Typography';
 import Paper from '@mui/material/Paper';
-import Checkbox from '@mui/material/Checkbox';
-import IconButton from '@mui/material/IconButton';
-import Tooltip from '@mui/material/Tooltip';
-import FormControlLabel from '@mui/material/FormControlLabel';
-import Switch from '@mui/material/Switch';
-import DeleteIcon from '@mui/icons-material/Delete';
-import FilterListIcon from '@mui/icons-material/FilterList';
 import { visuallyHidden } from '@mui/utils';
-
-
-
-
+import InputAdornment from '@mui/material/InputAdornment';
+import TextField from '@mui/material/TextField';
 
 const headCells = [
     {
@@ -130,19 +121,33 @@ export default function VehicleMakeList() {
     const [rows, setRows] = React.useState([]);
     const [totalRecords, setTotalRecords] = React.useState(0);
 
+    const [searchTerm, setSearchTerm] = React.useState('');
+    const handleSearchChange = (event) => {
+        setSearchTerm(event.target.value);
+    };
 
-    function getQueryParams(){
+
+    function getQueryParams() {
         return {
             rpp: rowsPerPage,
-            page: page+1
+            sort: generateSortString(),
+            searchQuery: generateSearchQuery(),
+            page: page + 1
         }
     }
 
+    function generateSortString() {
+        return `${orderBy}|${order}`
+    }
+
+    function generateSearchQuery() {
+        return `where name like '%${searchTerm}%' or abrv like '%${searchTerm}%'`
+    }
 
     function refreshData() {
-        let queryParams= new URLSearchParams(getQueryParams())
+        let queryParams = new URLSearchParams(getQueryParams())
 
-        fetch(`https://api.baasic.com/v1/vehicleApp/resources/VehicleMake?` +  queryParams)
+        fetch(`https://api.baasic.com/v1/vehicleApp/resources/VehicleMake?` + queryParams)
             .then(response => response.json())
             .then(data => {
                 setRows(data.item)
@@ -152,7 +157,7 @@ export default function VehicleMakeList() {
 
     React.useEffect(() => {
         refreshData()
-    }, [rowsPerPage, page])
+    }, [rowsPerPage, page, order, orderBy, searchTerm])
 
     const handleRequestSort = (event, property) => {
         const isAsc = orderBy === property && order === 'asc';
@@ -171,10 +176,26 @@ export default function VehicleMakeList() {
 
 
 
+
+
     return (
         <Box sx={{ width: '100%' }}>
             <Paper sx={{ width: '100%', mb: 2 }}>
                 <EnhancedTableToolbar />
+                <TextField
+                    id="input-with-icon-textfield"
+                    label="Search"
+                    value= {searchTerm}
+                    onChange= {handleSearchChange}
+                    InputProps={{
+                        startAdornment: (
+                            <InputAdornment position="start">
+                                {/* <AccountCircle /> */}
+                            </InputAdornment>
+                        ),
+                    }}
+                    variant="standard"
+                />
                 <TableContainer>
                     <Table
                         sx={{ minWidth: 750 }}
@@ -212,14 +233,14 @@ export default function VehicleMakeList() {
                                     </TableRow>
                                 );
                             })}
-                            
+
                         </TableBody>
                     </Table>
                 </TableContainer>
                 <TablePagination
                     rowsPerPageOptions={[5, 10, 25]}
                     component="div"
-                    count={totalRecords} 
+                    count={totalRecords}
                     rowsPerPage={rowsPerPage}
                     page={page}
                     onPageChange={handleChangePage}
